@@ -1,0 +1,131 @@
+<html>
+<head>
+  <style type="text/css">
+    .table th {
+        text-align: center;
+      }
+  </style>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+<body>
+
+
+  <div class="panel-group">
+    <div class="panel panel-success">
+      <div class="panel-heading" align="center">
+        <div class="padding" style='padding-bottom:3%;''>
+          <h1> Users Portal </h1>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" style='padding-top:3%';>
+    <form class="form-inline" id = "search" method="get">
+      <div class="input-group">
+        <input type="text" class="form-control" id = "searchuser" name = "searchuser" placeholder="Search username">
+        <div class="input-group-btn">
+         <button class="btn btn-success btn-outline-dark" type="submit">Search</button>
+         <button class="btn btn-danger btn-outline-dark" onclick="location.reload()" type="submit">Clear Search</button>
+       </div>
+     </div>
+   </form>
+ </div>
+
+
+ <div>
+   <form class="form-inline" id = "myform">
+    <table id="userstable" class="table table-bordered table-hover table-responsive" style='margin:7%; width:85%; text-align: center;'>
+      <tr class="warning">
+        <th>Username</th>
+        <th>Displayname</th>
+        <th>Department</th>
+        <th>Operations</th>
+      </tr>
+      <tr class="info">
+        <td><input type="text" required class="form-control" id = "addusername" name = "addusername" placeholder="Enter username"></td>
+        <td><input type="text" required class="form-control" id = "adddisplayname" name = "adddisplayname" placeholder="Enter displayname"></td>
+        <td><input type="text" required class="form-control" id = "adddepartment" name = "adddepartment" placeholder="Enter department"></td>
+        <td><div class="form-group">
+         <button type="submit" class="btn btn-primary">Add New</button>
+
+       </div></td>
+     </tr>
+   </table>
+ </form>
+</div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<script >
+
+  $.get("http://localhost:8080/users", function(data){
+        //console.log("Data: " + data.users[0]);
+        var userObject = data.users;
+        $.each(userObject,function(idx,value){
+          var $tr = $('<tr>').append($('<td>').text(value.username),
+            $('<td>').text(value.displayName),
+            $('<td>').text(value.department),
+            $('<td>').append('<div class="form-group"> <button class="btn btn-success btn-outline-dark" onclick="del(\''+value.username+'\')" type="button">Delete</button></div>')
+            ).appendTo('#userstable');});
+      });
+
+  $("#search").submit(function(event) {
+    $("#userstable").find("tr:gt(1)").remove();
+    var userName = $('input[name=searchuser]').val();
+    console.log("user : " + userName);
+    $.get("http://localhost:8080/users/"+ userName , function(data){
+      data = data.username;
+      var $tr = $('<tr>').append($('<td>').text(data.username),
+        $('<td>').text(data.displayName),
+        $('<td>').text(data.department),
+        $('<td>').append('<div class="input-group-btn"> <button class="btn btn-success btn-outline-dark" onclick="del(\''+data.username+'\')" type="button">Delete</button></div>')).appendTo('#userstable');
+    }).fail(function(e){ 
+      console.log(e);
+      console.log(e.status);
+      console.log(typeof(e.status));
+      if(e.status==404){
+        alert("Status " + e.status +"       USER " + e.statusText + "!");
+      }
+      location.reload();
+    });
+    event.preventDefault();
+  });
+
+
+  $("#myform").submit(function(event) {
+    var userName = $('input[name=addusername]').val();
+    var displayName = $('input[name=adddisplayname]').val();
+    var department = $('input[name=adddepartment]').val();
+    var userObject = {"username": userName,"displayName": displayName,"department": department}
+    console.log("user : " + userObject);
+    $.post( "http://localhost:8080/users/", JSON.stringify(userObject),function( data ) {
+      console.log( "Data Loaded: " + data );
+      var $tr = $('<tr>').append($('<td>').text(userObject.username),
+        $('<td>').text(userObject.displayName),
+        $('<td>').text(userObject.department),
+        $('<td>').append('<div class="input-group-btn"> <button class="btn btn-success btn-outline-dark" onclick="del(\''+userName+'\')" type="button">Delete</button></div>')).appendTo('#userstable');
+    }).fail(function(e){ 
+      console.log(e);
+      alert("Status " + e.status +"       " + e.statusText + "  -  USERNAME ALREADY EXISTS!");
+      return false;
+    });
+    $('input[name=addusername]').val('');
+    $('input[name=adddisplayname]').val('');
+    $('input[name=adddepartment]').val('');
+    return false;
+  });
+
+  function del(userNameDelete) {
+    console.log("user my click : " + userNameDelete);
+    $.get("http://localhost:8080/deleteUser/"+ userNameDelete, function(data){
+     console.log("Delete User:" + data);
+     location.reload();
+   });
+  }
+  
+</script>
+</body>
+</html>
